@@ -1,0 +1,59 @@
+---
+title: "animate trial"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.align = 'center')
+```
+
+# Crescent and Sorell filtered turbidity
+
+
+
+```{r pkgs}
+library(tidyverse)
+library(lubridate)
+library(gganimate)
+```
+
+```{r readIn}
+c0 <- read_rds("c0.rds")
+
+c1 <- 
+  c0 %>% 
+  group_by(lake) %>% 
+  arrange(dt) %>%
+  mutate(yr = year(dt),
+         mo = month(dt, label = TRUE)) %>% 
+  ungroup()
+
+```
+
+
+## Overall plot
+
+
+```{r iris1, echo=FALSE}
+p <- 
+  c1 %>% 
+  filter(!is.na(water.level) & yr > 1995  & !is.na(turb.filtered)) %>% 
+  mutate(yrf = factor(yr)) %>% 
+    ggplot(., aes(water.level, turb.filtered)) +
+  facet_wrap(~ lake, ncol = 1) + 
+  geom_point(size = 4, colour = "blue")
+p  
+
+
+```
+
+## Animated by year
+
+```{r}
+
+ap1 <- p + transition_states(yrf,
+                             transition_length = 2,
+                             state_length = 1)
+
+ap1 + ggtitle('Year {closest_state}')
+```
