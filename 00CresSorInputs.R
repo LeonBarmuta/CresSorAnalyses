@@ -1,9 +1,9 @@
 ## ---- pkgLoad ----
 
-
 library(tidyverse)
 library(readxl)
 library(lubridate)
+
 ## ---- inputFiles ----
 
 ll0 <- read_xlsx("../CresSorData/Crescent_Sorell_water_levels_1970_present.xlsx")
@@ -26,7 +26,9 @@ tb0 <-
   mutate(turb.total = as.numeric(turb.total),
          turb.filtered = as.numeric(turb.filtered),
          water.level = as.numeric(water.level),
-         date = as.Date(date))
+         date = as.Date(date),
+         turb.part = turb.total - turb.filtered # particulate turbidity
+         )
 tb0
 summary(tb0)
 
@@ -40,7 +42,8 @@ tb0 %>%   group_by(lake) %>%
   rename(dt = date) %>% 
   arrange(dt) %>%
   mutate(yr = year(dt),
-         mo = month(dt, label = TRUE)) %>% 
+         mo = month(dt, label = TRUE),
+         ) %>% 
   ungroup() %>% 
   filter(yr > 1996) %>% 
   ggplot(., aes(dt, turb.filtered)) + geom_line() + geom_point() + facet_wrap(~ lake, ncol = 1)
@@ -58,19 +61,29 @@ c0 <-
             mo_lab = month(dt, label = TRUE, abbr = TRUE),
             dy = day(dt),
             #mo_shift = ifelse(mo > 8, mo - 8, mo + 4),
-            w_yr = ifelse(mo < 9, yr -1, yr)) 
+            w_yr = ifelse(mo < 9, yr -1, yr) # compute water year: Sept-August
+  ) %>% 
+  arrange(lake, dt)
              
 
 c0
+
 summary(c0)
+
 c0 %>% 
   filter(is.na(l.level)& is.na(water.level)) %>% 
   summary()
 
 
 c0 %>% 
-  filter(is.na(l.level)& is.na(water.level) & !is.na(turb.total))  
+  filter(!is.na(l.level)& !is.na(water.level) & !is.na(turb.total)) 
 #hmm some issues here
+
+c0 %>% 
+  filter(!is.na(water.level)) %>% 
+  summary()
+
+
 
 # # date as water year
 # 
@@ -97,6 +110,7 @@ summary(xx)
 with(xx, all.equal(l.level, water.level))
 
 summary(c0)
+rm(xx)
 
 ## ---- WaterLevelLimts ----
 wll <- 
